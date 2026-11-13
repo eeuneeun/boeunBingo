@@ -1,0 +1,11 @@
+node_modules/
+.next/
+dist/
+src/generated/
+*.log
+.DS_Store
+
+# 비밀 값은 올리지 않고, 예시 파일만 올린다
+.env
+.env.*
+!*.example
