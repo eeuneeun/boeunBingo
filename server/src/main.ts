@@ -9,6 +9,10 @@ async function bootstrap() {
   app.enableCors({ origin: config.clientUrl, credentials: true });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   app.enableShutdownHooks();
-  await app.listen(4000);
+
+  const port = process.env.PORT || 4000;
+  const host = process.env.HOST || '0.0.0.0';
+  await app.listen(port, host);
+  console.log(`Server running on http://${host}:${port}`);
 }
 void bootstrap();
