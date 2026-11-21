@@ -17,7 +17,16 @@ import { RoomService } from './room.service.js';
 const RECONNECT_GRACE_MS = 30_000;
 const userRoom = (userId: string) => `user:${userId}`;
 
-@WebSocketGateway({ cors: { origin: config.clientUrl, credentials: true } })
+@WebSocketGateway({
+  cors: {
+    origin: [
+      'http://www.boeun-game.kro.kr',
+      'https://www.boeun-game.kro.kr',
+      config.clientUrl,
+    ],
+    credentials: true,
+  },
+})
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server!: Server;
 
@@ -29,7 +38,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {}
 
   async handleConnection(client: Socket) {
-    const user = this.auth.userFromCookieHeader(client.handshake.headers.cookie);
+    const user = this.auth.userFromCookieHeader(
+      client.handshake.headers.cookie,
+    );
     if (!user) {
       client.emit('auth:error');
       client.disconnect(true);
@@ -73,7 +84,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('room:join')
-  join(@ConnectedSocket() client: Socket, @MessageBody() body: { roomId: string }) {
+  join(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { roomId: string },
+  ) {
     return this.safe(() => {
       const user = this.userOf(client);
       this.broadcast(this.rooms.join(body?.roomId, user.id, user.nickname));
@@ -81,7 +95,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('game:ready')
-  ready(@ConnectedSocket() client: Socket, @MessageBody() body: { board: number[] }) {
+  ready(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { board: number[] },
+  ) {
     return this.safe(() => {
       const user = this.userOf(client);
       this.broadcast(this.rooms.ready(user.id, body?.board));
@@ -89,7 +106,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('game:pick')
-  pick(@ConnectedSocket() client: Socket, @MessageBody() body: { number: number }) {
+  pick(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { number: number },
+  ) {
     return this.safe(() => {
       const user = this.userOf(client);
       this.broadcast(this.rooms.pick(user.id, body?.number));
@@ -113,7 +133,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private broadcast(room: Room) {
     for (const p of room.players) {
-      this.server.to(userRoom(p.id)).emit('room:state', this.rooms.viewFor(room, p.id));
+      this.server
+        .to(userRoom(p.id))
+        .emit('room:state', this.rooms.viewFor(room, p.id));
     }
   }
 
@@ -122,7 +144,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       fn();
       return { ok: true };
     } catch (e) {
-      return { ok: false, error: e instanceof Error ? e.message : '알 수 없는 오류' };
+      return {
+        ok: false,
+        error: e instanceof Error ? e.message : '알 수 없는 오류',
+      };
     }
   }
 }
