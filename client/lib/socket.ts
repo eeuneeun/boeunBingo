@@ -1,19 +1,7 @@
 import { io } from "socket.io-client";
+import { SERVER_URL } from "@/lib/api";
 
-const serverUrls = (process.env.NEXT_PUBLIC_SERVER_DOMAIN_URLS || "")
-  .split(",")
-  .map((u) => u.trim())
-  .filter(Boolean);
-
-const isHttps =
-  typeof window !== "undefined" && window.location.protocol === "https:";
-const resolvedServerUrl =
-  (isHttps ? serverUrls.find((u) => u.startsWith("https://")) : undefined) ??
-  serverUrls[0] ??
-  serverUrls[1] ??
-  "http://localhost:4000";
-
-export const socket = io(resolvedServerUrl, {
+export const socket = io(SERVER_URL, {
   autoConnect: false,
   withCredentials: true, // 로그인 쿠키를 소켓 연결에도 함께 보낸다.
 });

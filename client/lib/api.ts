@@ -1,7 +1,5 @@
-const serverUrls = (process.env.NEXT_PUBLIC_SERVER_DOMAIN_URLS || "")
-  .split(",")
-  .map((u) => u.trim())
-  .filter(Boolean);
+export const SERVER_URL =
+  process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:4000";
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -12,17 +10,7 @@ export async function api<T>(
   const method =
     options.method ?? (options.body !== undefined ? "POST" : "GET");
   try {
-    const isHttps =
-      typeof window !== "undefined" && window.location.protocol === "https:";
-    const resolvedServerUrl =
-      (isHttps
-        ? serverUrls.find((u) => u.startsWith("https://"))
-        : undefined) ??
-      serverUrls[0] ??
-      serverUrls[1] ??
-      "http://localhost:4000";
-
-    const res = await fetch(`${resolvedServerUrl}${path}`, {
+    const res = await fetch(`${SERVER_URL}${path}`, {
       method,
       credentials: "include",
       headers:
