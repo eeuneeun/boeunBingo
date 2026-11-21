@@ -1,8 +1,4 @@
-const serverUrls = (
-  process.env.NEXT_PUBLIC_SERVER_URL ||
-  process.env.NEXT_PUBLIC_SERVER_URLS ||
-  ""
-)
+const serverUrls = (process.env.NEXT_PUBLIC_SERVER_DOMAIN_URLS || "")
   .split(",")
   .map((u) => u.trim())
   .filter(Boolean);
@@ -23,6 +19,7 @@ export async function api<T>(
         ? serverUrls.find((u) => u.startsWith("https://"))
         : undefined) ??
       serverUrls[0] ??
+      serverUrls[1] ??
       "http://localhost:4000";
 
     const res = await fetch(`${resolvedServerUrl}${path}`, {
