@@ -19,11 +19,7 @@ const userRoom = (userId: string) => `user:${userId}`;
 
 @WebSocketGateway({
   cors: {
-    origin: [
-      'http://www.boeun-game.kro.kr',
-      'https://www.boeun-game.kro.kr',
-      config.clientUrl,
-    ],
+    origin: ['http://bingo.io.kr', 'https://bingo.io.kr', config.clientUrl],
     credentials: true,
   },
 })
