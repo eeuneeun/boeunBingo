@@ -8,13 +8,16 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
     origin: [
-      'http://www.boeun-game.kro.kr',
-      'https://www.boeun-game.kro.kr',
+      'http://bingo.io.kr:3000',
+      'https://bingo.io.kr:3000',
       config.clientUrl,
     ],
     credentials: true,
   });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  app.setGlobalPrefix('api', {
+    exclude: ['health', 'metrics'],
+  });
   app.enableShutdownHooks();
 
   const port = process.env.PORT || 4000;

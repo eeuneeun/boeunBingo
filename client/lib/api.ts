@@ -10,7 +10,7 @@ export async function api<T>(
   const method =
     options.method ?? (options.body !== undefined ? "POST" : "GET");
   try {
-    const res = await fetch(`${SERVER_URL}${path}`, {
+    const res = await fetch(`${SERVER_URL}/api/${path}`, {
       method,
       credentials: "include",
       headers:
