@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 import { SERVER_URL } from "@/lib/api";
 
-export const socket = io(`${SERVER_URL}/api`, {
+export const socket = io(`${SERVER_URL}`, {
   autoConnect: false,
   withCredentials: true, // 로그인 쿠키를 소켓 연결에도 함께 보낸다.
 });
