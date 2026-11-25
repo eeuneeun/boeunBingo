@@ -26,7 +26,7 @@ export const useAuth = create<AuthStore>((set) => ({
   user: null,
 
   fetchMe: async () => {
-    const res = await api<User>("/api/auth/me");
+    const res = await api<User>("/auth/me");
     set(
       res.ok
         ? { status: "authed", user: res.data }
@@ -36,7 +36,7 @@ export const useAuth = create<AuthStore>((set) => ({
 
   // 성공하면 null, 실패하면 오류 메시지를 돌려준다.
   login: async (email, password) => {
-    const res = await api<User>("/api/auth/login", {
+    const res = await api<User>("/auth/login", {
       body: { email, password },
     });
     if (!res.ok) return res.error;
@@ -45,7 +45,7 @@ export const useAuth = create<AuthStore>((set) => ({
   },
 
   signup: async (email, password, nickname) => {
-    const res = await api<User>("/api/auth/signup", {
+    const res = await api<User>("/auth/signup", {
       body: { email, password, nickname },
     });
     if (!res.ok) return res.error;
@@ -54,7 +54,7 @@ export const useAuth = create<AuthStore>((set) => ({
   },
 
   logout: async () => {
-    await api("/api/auth/logout", { method: "POST", body: {} });
+    await api("/auth/logout", { method: "POST", body: {} });
     set({ status: "anon", user: null });
   },
 
