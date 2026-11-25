@@ -85,6 +85,7 @@ export class AuthController {
     res.clearCookie(STATE_COOKIE, { path: STATE_COOKIE_PATH });
 
     if (!code || !state || !saved || state !== saved) {
+      console.error('[google] state 검증 실패', { hasCode: !!code, hasState: !!state, hasSavedCookie: !!saved, match: state === saved });
       return res.redirect(`${config.clientUrl}/?error=google`);
     }
 
@@ -93,7 +94,8 @@ export class AuthController {
       const user = await this.auth.loginWithGoogle(profile);
       res.cookie(AUTH_COOKIE, this.auth.issueToken(user), authCookieOptions());
       return res.redirect(config.clientUrl);
-    } catch {
+    } catch (e) {
+      console.error('[google] 로그인 처리 실패', e);
       return res.redirect(`${config.clientUrl}/?error=google`);
     }
   }
