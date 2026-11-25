@@ -3,7 +3,7 @@ import { config } from '../config.js';
 
 export const AUTH_COOKIE = 'access_token';
 export const STATE_COOKIE = 'oauth_state';
-export const STATE_COOKIE_PATH = '/auth/google';
+export const STATE_COOKIE_PATH = '/api/auth/google';
 
 export function authCookieOptions(): CookieOptions {
   return {
