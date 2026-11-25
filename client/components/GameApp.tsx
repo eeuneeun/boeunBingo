@@ -1,12 +1,13 @@
-'use client';
+"use client";
 
-import Lobby from '@/components/Lobby';
-import Play from '@/components/Play';
-import Setup from '@/components/Setup';
-import { useGameSocket } from '@/hooks/useGameSocket';
-import { request } from '@/lib/socket';
-import { useAuth } from '@/store/authStore';
-import { useGame } from '@/store/gameStore';
+import Lobby from "@/components/Lobby";
+import Play from "@/components/Play";
+import Setup from "@/components/Setup";
+import { useGameSocket } from "@/hooks/useGameSocket";
+import { request } from "@/lib/socket";
+import { useAuth } from "@/store/authStore";
+import { useGame } from "@/store/gameStore";
+import ChatBox from "./ChatBox";
 
 export default function GameApp() {
   const user = useAuth((s) => s.user)!;
@@ -18,12 +19,12 @@ export default function GameApp() {
   const setRoom = useGame((s) => s.setRoom);
 
   const leave = async () => {
-    await request('room:leave');
+    await request("room:leave");
     setRoom(null);
   };
 
   const signOut = async () => {
-    await request('room:leave');
+    await request("room:leave");
     await logout();
   };
 
@@ -40,7 +41,8 @@ export default function GameApp() {
         <p className="text-gray-500">서버에 연결하는 중...</p>
       ) : (
         <>
-          {!room ? <Lobby /> : room.phase === 'waiting' ? <Setup /> : <Play />}
+          {!room ? <Lobby /> : room.phase === "waiting" ? <Setup /> : <Play />}
+          {room && <ChatBox key={room.id} />}
           {room && (
             <button
               className="w-full rounded-lg border border-gray-300 p-3 text-gray-700 hover:bg-gray-50"

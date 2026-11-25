@@ -27,6 +27,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server!: Server;
 
   private readonly leaveTimers = new Map<string, NodeJS.Timeout>();
+  private readonly lastChatAt = new Map<string, number>(); // 채팅 도배 방지용
 
   constructor(
     private readonly rooms: RoomService,
@@ -65,6 +66,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const timer = setTimeout(() => {
       this.leaveTimers.delete(user.id);
+      this.lastChatAt.delete(user.id); // 채팅창 타임아웃
       const room = this.rooms.leave(user.id);
       if (room) this.broadcast(room);
     }, RECONNECT_GRACE_MS);
@@ -118,6 +120,41 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const user = this.userOf(client);
       const room = this.rooms.leave(user.id);
       if (room) this.broadcast(room);
+    });
+  }
+
+  @SubscribeMessage('chat:send')
+  chat(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { message: string },
+  ) {
+    return this.safe(() => {
+      const user = this.userOf(client);
+
+      const text = String(body?.message ?? '')
+        .trim()
+        .slice(0, 200);
+      if (!text) throw new Error('메시지를 입력해주세요.');
+
+      const room = this.rooms.findByPlayer(user.id);
+      if (!room) throw new Error('방에 참가 중이 아닙니다.');
+
+      const now = Date.now();
+      if (now - (this.lastChatAt.get(user.id) ?? 0) < 500) {
+        throw new Error('너무 빠르게 보내고 있어요.');
+      }
+      this.lastChatAt.set(user.id, now);
+
+      const payload = {
+        id: `${now}-${user.id}`,
+        userId: user.id,
+        nickname: user.nickname,
+        message: text,
+        at: now,
+      };
+      for (const p of room.players) {
+        this.server.to(userRoom(p.id)).emit('chat:message', payload);
+      }
     });
   }
 
