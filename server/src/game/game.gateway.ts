@@ -113,9 +113,16 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     return this.safe(() => {
       const user = this.userOf(client);
+      const prev = this.rooms.findByPlayer(user.id);
       const before = this.rooms.findByPlayer(user.id)?.phase;
+      const wasReady =
+        prev?.players.find((p) => p.id === user.id)?.ready ?? false;
       const room = this.rooms.ready(user.id, body?.board);
       this.broadcast(room);
+
+      if (!wasReady) {
+        this.announce(room, `${user.nickname}님이 준비를 완료했습니다.`);
+      }
       if (before !== 'playing' && room.phase === 'playing') {
         this.announce(room, '게임이 시작되었습니다!');
       }
