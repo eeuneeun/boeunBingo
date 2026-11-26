@@ -88,7 +88,21 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     return this.safe(() => {
       const user = this.userOf(client);
-      this.broadcast(this.rooms.join(body?.roomId, user.id, user.nickname));
+      // 서비스가 방 ID를 대문자로 바꿔 찾으니 여기서도 똑같이 맞춰서 비교
+      const targetId = String(body?.roomId ?? '').toUpperCase();
+
+      const existing = this.rooms.findByPlayer(user.id);
+      if (existing) {
+        if (existing.id === targetId) {
+          this.broadcast(existing); // 같은 방 재요청: 상태만 다시 내려주고 안내는 생략
+          return;
+        }
+        throw new Error('이미 다른 방에 참여 중입니다.');
+      }
+
+      const room = this.rooms.join(targetId, user.id, user.nickname);
+      this.broadcast(room); // rooms.join은 딱 한 번만 호출
+      this.announce(room, `${user.nickname}님이 입장했습니다.`);
     });
   }
 
@@ -99,7 +113,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     return this.safe(() => {
       const user = this.userOf(client);
-      this.broadcast(this.rooms.ready(user.id, body?.board));
+      const before = this.rooms.findByPlayer(user.id)?.phase;
+      const room = this.rooms.ready(user.id, body?.board);
+      this.broadcast(room);
+      if (before !== 'playing' && room.phase === 'playing') {
+        this.announce(room, '게임이 시작되었습니다!');
+      }
     });
   }
 
@@ -110,7 +129,22 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     return this.safe(() => {
       const user = this.userOf(client);
-      this.broadcast(this.rooms.pick(user.id, body?.number));
+      const before = this.rooms.findByPlayer(user.id)?.phase;
+      const room = this.rooms.pick(user.id, body?.number);
+      this.broadcast(room);
+      if (before !== 'finished' && room.phase === 'finished') {
+        if (room.winnerId === 'draw') {
+          this.announce(room, '무승부로 게임이 종료되었습니다.');
+        } else {
+          const winner = room.players.find((p) => p.id === room.winnerId);
+          this.announce(
+            room,
+            winner
+              ? `${winner.nickname}님이 승리했습니다!`
+              : '게임이 종료되었습니다.',
+          );
+        }
+      }
     });
   }
 
@@ -119,7 +153,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return this.safe(() => {
       const user = this.userOf(client);
       const room = this.rooms.leave(user.id);
-      if (room) this.broadcast(room);
+      if (room) {
+        this.broadcast(room);
+        this.announce(room, `${user.nickname}님이 퇴장했습니다.`);
+      }
     });
   }
 
@@ -147,6 +184,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       const payload = {
         id: `${now}-${user.id}`,
+        type: 'user' as const, // 추가
         userId: user.id,
         nickname: user.nickname,
         message: text,
@@ -169,6 +207,19 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server
         .to(userRoom(p.id))
         .emit('room:state', this.rooms.viewFor(room, p.id));
+    }
+  }
+
+  private announce(room: Room, text: string) {
+    const now = Date.now();
+    const payload = {
+      id: `sys-${now}-${Math.random().toString(36).slice(2, 8)}`,
+      type: 'system' as const,
+      message: text,
+      at: now,
+    };
+    for (const p of room.players) {
+      this.server.to(userRoom(p.id)).emit('chat:message', payload);
     }
   }
 
